@@ -1,0 +1,238 @@
+
+Used to allocate a slurm job 
+salloc   --partition=cenvalarc.gpu  --nodes=1   --ntasks-per-node=2   --cpus-per-task=28   --mem=96G   --gres=gpu:l40s:1   --time=24:00:00
+
+Test GPU
+salloc   --partition=test  --nodes=1   --ntasks-per-node=2   --cpus-per-task=28   --mem=96G   --gres=gpu:a100:1   --time=01:00:00
+
+GET GPUS and their node
+
+sinfo -N -O "nodehost:18,statecompact:8,gres:24,gresused:24" | grep -i gpu | grep -i idle
+sinfo -N -O "nodehost:18,partition:20,statecompact:8,gres:24,gresused:24" | grep -i gpu | grep -i idle
+
+Check if any GPUs in my server: 
+squeue -u anindra
+
+Each the job
+
+scontrol show job 352764
+
+Check who has used this node and what exactly they are using
+
+squeue -w gnode015 -o "%.10i %.9P %.20j %.8u %.2t %.10M %.20b"
+
+========================
+UC MERCED GPU NODES
+========================
+
+1. A100 GPU Nodes
+   Partition: gpu
+   Number of nodes: 8
+   GPUs per node: 2x NVIDIA A100
+   GPU memory: 40 GB each
+   Total GPU memory per node: 80 GB
+   System RAM per node: 256 GB
+   CPU: 2x Intel Xeon Gold 6330, 28 cores each
+   Total CPU cores: 56
+   Local storage: 1 TB NVMe
+
+   Request 1 GPU:
+   --partition=gpu
+   --gres=gpu:a100:1
+
+2. L40S GPU Nodes
+   Partition: cenvalarc.gpu
+   Nodes: gnode017 - gnode024
+   Number of nodes: 8
+   GPUs per node: 2x NVIDIA L40S
+   GPU memory: 48 GB each
+   Total GPU memory per node: 96 GB
+   System RAM per node: 256 GB
+   CPU: 2x Intel Xeon Gold 6530, 32 cores each
+   Total CPU cores: 64
+   Local storage: 1 TB NVMe
+
+   Request 1 GPU:
+   --partition=cenvalarc.gpu
+   --gres=gpu:l40s:1
+
+
+3. H200 GPU Nodes
+   Partition: cenvalarc.gpu
+   Nodes: gnode026 - gnode029
+   Number of nodes: 4
+   GPUs per node: 2x NVIDIA H200 NVL
+   GPU memory: 141 GB each
+   Total GPU memory per node: 282 GB
+   System RAM per node: 256 GB
+   CPU: 2x Intel Xeon Gold 6530, 32 cores each
+   Total CPU cores: 64
+   Local storage: 1 TB NVMe
+
+   Request 1 GPU:
+   --partition=cenvalarc.gpu
+   --gres=gpu:nvidia_h200_nvl:1
+
+
+========================
+ALLOCATE A SLURM JOB
+========================
+
+L40S:
+
+salloc \
+  --partition=cenvalarc.gpu \
+  --nodes=1 \
+  --ntasks-per-node=2 \
+  --cpus-per-task=28 \
+  --mem=96G \
+  --gres=gpu:l40s:1 \
+  --time=24:00:00
+
+
+H200:
+
+salloc \
+  --partition=cenvalarc.gpu \
+  --nodes=1 \
+  --ntasks-per-node=2 \
+  --cpus-per-task=28 \
+  --mem=96G \
+  --gres=gpu:nvidia_h200_nvl:1 \
+  --time=24:00:00
+
+
+========================
+TEST GPU
+========================
+
+salloc \
+  --partition=test \
+  --nodes=1 \
+  --ntasks-per-node=2 \
+  --cpus-per-task=28 \
+  --mem=96G \
+  --gres=gpu:a100:1 \
+  --time=01:00:00
+
+
+========================
+SEE GPU NODES / AVAILABILITY
+========================
+
+Show idle GPU nodes:
+
+sinfo -N -O "nodehost:18,statecompact:8,gres:24,gresused:24" \
+  | grep -i gpu \
+  | grep -i idle
+
+Show partition too:
+
+sinfo -N -O "nodehost:18,partition:20,statecompact:8,gres:24,gresused:24" \
+  | grep -i gpu \
+  | grep -i idle
+
+
+========================
+CHECK MY JOBS
+========================
+
+squeue -u anindra
+
+
+========================
+CHECK A SPECIFIC JOB
+========================
+
+scontrol show job 352764
+
+
+========================
+CHECK WHO IS USING A NODE
+========================
+
+squeue -w gnode015 \
+  -o "%.10i %.9P %.20j %.8u %.2t %.10M %.20b"
+
+
+========================
+QUICK GPU REFERENCE
+========================
+
+A100:
+  40 GB VRAM / GPU
+  2 GPUs / node
+  80 GB total VRAM / node
+  256 GB system RAM
+
+L40S:
+  48 GB VRAM / GPU
+  2 GPUs / node
+  96 GB total VRAM / node
+  256 GB system RAM
+  gnode017-024
+
+H200 NVL:
+  141 GB VRAM / GPU
+  2 GPUs / node
+  282 GB total VRAM / node
+  256 GB system RAM
+  gnode026-029
+
+Found the queue table on that page. Here's what it says:
+
+| Queue | Max Wall Time | Default Time | Max Nodes/Job | Max jobs |
+|---|---|---|---|---|
+| **test** | **1 hour** | 5 min | 2 nodes | 1 |
+| bigmem | 3 days | 1 hr | 2 nodes | 2 |
+| gpu | 3 days | 1 hr | 2 nodes | 4 |
+| short | 6 hours | 1 hr | 4 nodes | 12 |
+| medium | 1 day | 6 hrs | 4 nodes | 6 |
+| long | 3 days | 1 day | 4 nodes | 3 |
+| cenvalarc.compute | 3 days | 1 day | 4 nodes | 3 |
+| cenvalarc.bigmem | 3 days | 1 day | 2 nodes | 2 |
+| **cenvalarc.gpu** | **3 days** | 1 day | 2 nodes | 4 |
+
+So to directly answer your question:
+- **`test`**: max wall time is **1 hour** — matches what you saw earlier ("Job has exceeded its time limit" after your `salloc` was on `test`).
+- **`cenvalarc.gpu`**: max wall time is **3 days**, with a default of 1 day if you don't specify `-t`.
+
+One nuance: the doc notes `test` "has access to all node types" via `--constraint`, so you can use it to quickly check hardware on any node type (like you were doing with `gnode022`), but you're capped at 1 hour — fine for testing/debugging, not for actual training runs. For real training jobs on L40S nodes, you'd want `cenvalarc.gpu` (up to 3 days) and specify `-t` explicitly if you want less than the 1-day default, or up to `-t 3-00:00:00` for the max.
+
+
+s.sh
+Submitted batch job 175749
+(LaneNet310) [anindra@gnode009 Yolov11]$ sbatch yolo11m.sh
+Submitted batch job 175750
+(LaneNet310) [anindra@gnode009 Yolov11]$ sbatch yolo11n.sh
+Submitted batch job 175751
+(LaneNet310) [anindra@gnode009 Yolov11]$ scancel 175751 <----- NOOOOO
+
+
+(LaneNet310) [anindra@gnode009 Yolov11]$ sbatch yolo11
+n.sh
+Submitted batch job 175770
+
+
+(base) [anindra@rclogin02 Yolov11]$ sbatch yolo11s_continue.sh
+Submitted batch job 177176
+
+(base) [anindra@rclogin02 Yolov11]$ sbatch yolo11m_continue.sh
+Submitted batch job 177180
+
+
+new Yolov11
+
+(LaneNet310) [anindra@rclogin03 shell]$ sbatch yolo11s.sh
+Submitted batch job 183266
+(LaneNet310) [anindra@rclogin03 shell]$ sbatch yolo11m.sh
+Submitted batch job 183267
+(LaneNet310) [anindra@rclogin03 shell]$ sbatch yolo11n.sh
+Submitted batch job 183268
+(LaneNet310) [anindra@rclogin03 shell]$ 
+
+
+Base Output with rergular bdd100k classes.
+
+{'traffic sign': 239961, 'traffic light': 186301, 'car': 714121, 'area/drivable': 64050, 'lane/road curb': 109868, 'lane/double yellow': 37519, 'truck': 30012, 'bus': 11688, 'area/alternative': 61799, 'lane/single yellow': 20220, 'lane/single white': 247108, 'person': 91435, 'lane/crosswalk': 108284, 'rider': 4522, 'bike': 7227, 'lane/single other': 249, 'lane/double white': 5674, 'motor': 3002, 'train': 136, 'area/unknown': 2, 'lane/double other': 26}
+
